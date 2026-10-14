@@ -1,5 +1,9 @@
 import 'package:crypto/crypto.dart';
 
+/// OAuth 1.0a signature methods supported by NetSuite.
+///
+/// NetSuite only accepts `HMAC-SHA1` for RESTlets today; the other variants
+/// are kept for compatibility with the 1.x API and custom endpoints.
 // ignore: constant_identifier_names
 enum SignatureMethod { HMAC_SHA1, HMAC_SHA256, HMAC_SHA384, HMAC_SHA512 }
 

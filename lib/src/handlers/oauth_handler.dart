@@ -1,63 +1,94 @@
 import 'package:http/http.dart' as http;
-import 'package:netsuite_connector/src/credentials.dart';
-import 'package:netsuite_connector/src/enum/signature_method.dart';
-import 'package:netsuite_connector/src/handlers/request_handler.dart';
-import 'package:netsuite_connector/src/signature.dart';
 
+import '../credentials.dart';
+import '../enum/signature_method.dart';
+import '../exceptions.dart';
+import '../signature.dart';
+import 'request_handler.dart';
+
+/// Signs outgoing requests with OAuth 1.0a (HMAC) so they are accepted by
+/// NetSuite RESTlets.
+///
+/// The OAuth `realm` can be provided explicitly via [realm] (recommended —
+/// use your account ID, e.g. `TSTDRV1234567`). When [realm] is omitted it is
+/// derived automatically from the request host
+/// (`https://TSTDRV-1234567.restlets.api.netsuite.com/...` → `TSTDRV_1234567`).
 class OAuthHandler extends RequestHandler {
-  final String version = '1.0';
+  /// OAuth protocol version sent in the header.
+  final String version;
+
+  /// Credentials used for signing every request.
   final Credentials credentials;
+
+  /// HMAC algorithm used to produce `oauth_signature`.
   final SignatureMethod hash;
 
-  OAuthHandler(
-      {required this.credentials, this.hash = SignatureMethod.HMAC_SHA256});
+  /// The OAuth realm (NetSuite account ID, e.g. `TSTDRV1234567`).
+  ///
+  /// If `null`, the realm is inferred from each request's host name.
+  final String? realm;
+
+  OAuthHandler({
+    required this.credentials,
+    this.realm,
+    this.hash = SignatureMethod.HMAC_SHA256,
+    this.version = '1.0',
+  });
 
   @override
   http.BaseRequest handle(http.BaseRequest request) {
-    Map<String, String> queryParams = query(request.url);
+    try {
+      final queryParams = RequestHandler.query(request.url);
+      final url = RequestHandler.baseUri(request.url);
+      final authHeader = header();
+      final baseHeaders = RequestHandler.combine(queryParams, authHeader);
 
-    String url = baseUri(request.url);
-    Map<String, String> authHeader = header();
-    Map<String, String> baseHeaders = combine(queryParams, authHeader);
+      final queryStr = RequestHandler.queryString(
+        RequestHandler.sort(baseHeaders),
+      );
 
-    String queryStr = queryString(sort(baseHeaders));
+      final signatureBaseString = [
+        request.method.toUpperCase(),
+        RequestHandler.encode(url),
+        RequestHandler.encode(queryStr),
+      ].join('&');
 
-    String signatureBaseString =
-        [request.method, encode(url), encode(queryStr)].join('&');
+      final signature = Signature(credentials, method: hash);
+      authHeader['oauth_signature'] = signature.hash(signatureBaseString);
 
-    Signature signature = Signature(credentials, method: hash);
-    authHeader['oauth_signature'] = signature.hash(signatureBaseString);
+      final headerString = build(
+        RequestHandler.combine({
+          'realm': realm ?? RequestHandler.account(request.url),
+        }, authHeader),
+      );
 
-    var headerString = build({}
-      ..addAll({'realm': account(request.url)})
-      ..addAll(authHeader));
-
-    Map<String, String> requestHeaders = {
-      'Authorization': headerString,
-      'Content-type': 'application/json',
-    };
-
-    request.headers.addAll(requestHeaders);
-    return request;
+      request.headers.addAll({
+        'Authorization': headerString,
+        'Accept': 'application/json',
+      });
+      return request;
+    } on NetsuiteException {
+      rethrow;
+    } catch (error) {
+      throw OAuthSignatureException('Unable to sign request: $error');
+    }
   }
 
-  Map<String, String> header() {
-    return {
-      'oauth_consumer_key': credentials.consumerKey,
-      'oauth_nonce': nonce(),
-      'oauth_signature_method': hash.key,
-      'oauth_timestamp': timestamp(),
-      'oauth_token': credentials.tokenKey,
-      'oauth_version': version
-    };
-  }
+  /// The OAuth parameters (without the signature) added to every request.
+  Map<String, String> header() => {
+        'oauth_consumer_key': credentials.consumerKey,
+        'oauth_nonce': RequestHandler.nonce(),
+        'oauth_signature_method': hash.key,
+        'oauth_timestamp': RequestHandler.timestamp(),
+        'oauth_token': credentials.token,
+        'oauth_version': version,
+      };
 
+  /// Renders the parameter map into an `OAuth k1="v1", k2="v2"` header value.
   String build(Map<String, String> headers) {
-    var str = 'OAuth ';
-    headers.forEach((key, value) {
-      str += '$key="${encode(value)}", ';
-    });
-
-    return str.substring(0, str.length - 2);
+    final parts = headers.entries
+        .map((e) => '${e.key}="${RequestHandler.encode(e.value)}"')
+        .join(', ');
+    return 'OAuth $parts';
   }
 }
