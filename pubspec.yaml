@@ -1,20 +1,23 @@
 name: netsuite_connector
-description: A module which makes connecting to Netsuite RESTlets using OAuth much easier.
-version: 1.0.5
+description: >-
+  A production-ready, null-safe Dart module that makes connecting to NetSuite
+  RESTlets using OAuth 1.0a much easier. Supports GET, POST, PUT/PATCH (update),
+  DELETE, HEAD with typed error handling.
+version: 2.0.0
 homepage: https://github.com/pravinkumarravi/netsuite_connector
+repository: https://github.com/pravinkumarravi/netsuite_connector
+issue_tracker: https://github.com/pravinkumarravi/netsuite_connector/issues
+documentation: https://github.com/pravinkumarravi/netsuite_connector#readme
+topics: [netsuite, restlet, oauth, http, erp]
 license: Apache-2.0
-url: https://github.com/pravinkumarravi/netsuite-connector
 
 environment:
-  sdk: ">=2.18.2 <3.0.0"
-
-# dependencies:
-#   path: ^1.8.0
-
-dev_dependencies:
-  lints: ^2.0.0
-  test: ^1.16.0
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
-  crypto: ^3.0.2
-  http: ^0.13.5
+  crypto: ^3.0.3
+  http: ^1.2.0
+
+dev_dependencies:
+  lints: ^4.0.0
+  test: ^1.25.0
