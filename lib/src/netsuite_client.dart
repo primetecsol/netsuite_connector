@@ -128,7 +128,8 @@ class NetsuiteClient extends http.BaseClient {
       );
 
   @override
-  Future<http.Response> delete(Uri url, {
+  Future<http.Response> delete(
+    Uri url, {
     Object? body,
     Map<String, String>? headers,
     Encoding? encoding,

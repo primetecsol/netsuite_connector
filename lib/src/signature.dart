@@ -13,7 +13,8 @@ class Signature {
   final Credentials credentials;
   final SignatureMethod method;
 
-  const Signature(this.credentials, {this.method = SignatureMethod.HMAC_SHA256});
+  const Signature(this.credentials,
+      {this.method = SignatureMethod.HMAC_SHA256});
 
   /// The signing key: `consumerSecret & tokenSecret` (OAuth 1.0a form used
   /// by NetSuite).

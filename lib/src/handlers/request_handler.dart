@@ -39,9 +39,7 @@ abstract class RequestHandler {
 
   /// Current UTC unix timestamp in seconds, as required by OAuth 1.0a.
   static String timestamp() =>
-      (DateTime.now().toUtc().millisecondsSinceEpoch / 1000)
-          .round()
-          .toString();
+      (DateTime.now().toUtc().millisecondsSinceEpoch / 1000).round().toString();
 
   /// RFC 3986 percent-encoding used by OAuth.
   static String encode(String str) => Uri.encodeComponent(str);
@@ -53,9 +51,8 @@ abstract class RequestHandler {
 
   /// Returns a copy of [map] sorted by key (required for the signature base
   /// string parameter normalization).
-  static Map<String, String> sort(Map<String, String> map) =>
-      Map.fromEntries(
-          map.entries.toList()..sort((a, b) => a.key.compareTo(b.key)));
+  static Map<String, String> sort(Map<String, String> map) => Map.fromEntries(
+      map.entries.toList()..sort((a, b) => a.key.compareTo(b.key)));
 
   /// Merges [second] into a copy of [first] (does not mutate the inputs).
   static Map<String, String> combine(

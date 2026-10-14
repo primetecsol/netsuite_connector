@@ -95,7 +95,8 @@ class NetsuiteResponseException extends NetsuiteException {
   /// True when NetSuite reports an expired/invalid OAuth signature, usually
   /// caused by clock skew between this machine and NetSuite.
   bool get isSignatureExpired =>
-      statusCode == 401 && (errorCode?.toUpperCase().contains('EXPIRED') ?? false);
+      statusCode == 401 &&
+      (errorCode?.toUpperCase().contains('EXPIRED') ?? false);
 
   /// True when the request was rejected because of a duplicate nonce
   /// (replay protection). Simply retrying the request fixes it.
@@ -136,4 +137,3 @@ class NetsuiteResponseException extends NetsuiteException {
     }
   }
 }
-
